@@ -1,0 +1,24 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "kyc-backend"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-z60w0jxx7wip"
+s3_prefix = "kyc-backend"
+region = "us-east-1"
+profile = "athena-ksolves"
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
+
+[dev]
+[dev.deploy]
+[dev.deploy.parameters]
+stack_name = "kyc-backend"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-z60w0jxx7wip"
+s3_prefix = "kyc-backend"
+region = "us-east-1"
+profile = "athena-ksolves"
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
+parameter_overrides = "env=\"dev\" app=\"kyc\""
+confirm_changeset = true

@@ -1,0 +1,271 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An AWS Serverless Specification template KYC Form
+
+Parameters:
+  env:
+    Type: String
+    Description: Deployment Env
+  app:
+    Type: String
+    Description: App Name
+Resources:
+  MxUserTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      KeySchema:
+      - AttributeName: phone_number
+        KeyType: HASH
+      AttributeDefinitions:
+      - AttributeName: phone_number
+        AttributeType: S
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      BillingMode: PAY_PER_REQUEST
+  SNSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: cognito-idp.amazonaws.com
+          Action:
+          - sts:AssumeRole
+          Condition:
+            StringEquals:
+              sts:ExternalId: awsfor4e4bd6a6_role_external_id
+      Policies:
+      - PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - sns:Publish
+            Resource: "*"
+        PolicyName: sns-policy
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      AutoVerifiedAttributes:
+      - phone_number
+      MfaConfiguration: 'OFF'
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: true
+      Schema:
+      - Mutable: true
+        Name: email
+        Required: true
+      - Mutable: true
+        Name: name
+        Required: true
+      - Mutable: true
+        Name: phone_number
+        Required: true
+      SmsAuthenticationMessage: 'Your authentication code is {####}'
+      SmsConfiguration:
+        ExternalId: awsfor4e4bd6a6_role_external_id
+        SnsCallerArn:
+          Fn::GetAtt:
+          - SNSRole
+          - Arn
+      SmsVerificationMessage: 'Your verification code is {####}'
+      UserAttributeUpdateSettings:
+        AttributesRequireVerificationBeforeUpdate:
+        - phone_number
+      UsernameAttributes: 
+        - phone_number
+      UsernameConfiguration:
+        CaseSensitive: false
+      LambdaConfig:
+        CreateAuthChallenge: !GetAtt CreateAuthChallenge.Arn
+        DefineAuthChallenge: !GetAtt DefineAuthChallenge.Arn
+        VerifyAuthChallengeResponse: !GetAtt VerifyAuthChallenge.Arn
+  UserPoolClientWeb:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId:
+        Ref: UserPool
+      RefreshTokenValidity: 1
+      TokenValidityUnits:
+        RefreshToken: days
+    DependsOn:
+    - UserPool
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId:
+        Ref: UserPool
+      GenerateSecret: false
+      RefreshTokenValidity: 1
+      TokenValidityUnits:
+        RefreshToken: days
+  IdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      AllowUnauthenticatedIdentities: true
+      CognitoIdentityProviders:
+      - ClientId:
+          Ref: UserPoolClient
+        ProviderName:
+          Fn::Sub:
+          - cognito-idp.${region}.amazonaws.com/${client}
+          - region:
+              Ref: AWS::Region
+            client:
+              Ref: UserPool
+      - ClientId:
+          Ref: UserPoolClientWeb
+        ProviderName:
+          Fn::Sub:
+          - cognito-idp.${region}.amazonaws.com/${client}
+          - region:
+              Ref: AWS::Region
+            client:
+              Ref: UserPool
+  AuthRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Federated: cognito-identity.amazonaws.com
+          Action: sts:AssumeRoleWithWebIdentity
+          Condition:
+            StringEquals:
+              "cognito-identity.amazonaws.com:aud": !Ref IdentityPool
+            ForAnyValue:StringLike:
+              "cognito-identity.amazonaws.com:amr": "authenticated"
+  UnauthRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Federated: cognito-identity.amazonaws.com
+          Action: sts:AssumeRoleWithWebIdentity
+          Condition:
+            StringEquals:
+              "cognito-identity.amazonaws.com:aud": !Ref IdentityPool
+            ForAnyValue:StringLike:
+              "cognito-identity.amazonaws.com:amr": "unauthenticated"
+  IdentityPoolRoleMap:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId:
+        Ref: IdentityPool
+      Roles:
+        unauthenticated: !GetAtt UnauthRole.Arn
+        authenticated: !GetAtt AuthRole.Arn
+  KycApi:
+    Type: AWS::Serverless::Api
+    Properties:
+        StageName: Prod
+        Cors:
+          AllowMethods: "'POST, GET'"
+          AllowHeaders: "'X-Forwarded-For'"
+          AllowOrigin: "'*'"
+          MaxAge: "'600'"
+  MxUserApi:
+    Type: AWS::Serverless::Api
+    Properties:
+        StageName: Prod
+        Cors:
+          AllowMethods: "'POST, GET'"
+          AllowHeaders: "'X-Forwarded-For'"
+          AllowOrigin: "'*'"
+          MaxAge: "'600'"          
+  CreateAuthChallenge:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      CodeUri: lambda/CreateAuthChallenge
+      Description: ''
+      MemorySize: 128
+      Timeout: 25
+  DefineAuthChallenge:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      CodeUri: lambda/DefineAuthChallenge
+      Description: ''
+      MemorySize: 128
+      Timeout: 25
+  VerifyAuthChallenge:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      CodeUri: lambda/VerifyAuthChallenge
+      Description: ''
+      MemorySize: 128
+      Timeout: 25
+  KycIdentity:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      CodeUri: lambda/KycIdentity
+      Description: ''
+      MemorySize: 128
+      Timeout: 25
+      Policies:
+        - SSMParameterWithSlashPrefixReadPolicy:
+            ParameterName: !Sub "/${env}/${app}/*"
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /kycidentity
+            Method: any
+            RestApiId: !Ref KycApi
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /kycidentity/{proxy+}
+            Method: any
+            RestApiId: !Ref KycApi
+  UserAthMex:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      CodeUri: lambda/UserAthMex
+      Description: ''
+      MemorySize: 128
+      Timeout: 25
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref MxUserTable
+          TABLE_REGION:  !Ref AWS::Region
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MxUserTable
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /mexusers
+            Method: any
+            RestApiId: !Ref MxUserApi
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /mexusers/{proxy+}
+            Method: any
+            RestApiId: !Ref MxUserApi

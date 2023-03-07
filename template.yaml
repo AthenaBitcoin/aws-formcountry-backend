@@ -2,6 +2,13 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
 Description: An AWS Serverless Specification template KYC Form
 
+Globals:
+  Function:
+    Environment:
+      Variables:
+        ENV: !Ref env
+        APP: !Ref app
+
 Parameters:
   env:
     Type: String
@@ -250,6 +257,10 @@ Resources:
       Description: ''
       MemorySize: 128
       Timeout: 25
+      Environment:
+        Variables:
+          JUMIO_TOKEN: !Sub "/${env}/${app}/JUMIO_TOKEN"
+          JUMIO_USER: !Sub "/${env}/${app}/JUMIO_USER"
       Policies:
         - SSMParameterWithSlashPrefixReadPolicy:
             ParameterName: !Sub "/${env}/${app}/*"

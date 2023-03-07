@@ -162,6 +162,20 @@ Resources:
               "cognito-identity.amazonaws.com:aud": !Ref IdentityPool
             ForAnyValue:StringLike:
               "cognito-identity.amazonaws.com:amr": "unauthenticated"
+  ApiExecutePolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: KycApiExectuionPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'execute-api:Invoke'
+            Resource: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KycApi}/*/mexusers/*"
+      Roles:
+        - !Ref UnauthRole
+        - !Ref AuthRole
   IdentityPoolRoleMap:
     Type: AWS::Cognito::IdentityPoolRoleAttachment
     Properties:
@@ -178,16 +192,7 @@ Resources:
           AllowMethods: "'POST, GET'"
           AllowHeaders: "'X-Forwarded-For'"
           AllowOrigin: "'*'"
-          MaxAge: "'600'"
-  MxUserApi:
-    Type: AWS::Serverless::Api
-    Properties:
-        StageName: Prod
-        Cors:
-          AllowMethods: "'POST, GET'"
-          AllowHeaders: "'X-Forwarded-For'"
-          AllowOrigin: "'*'"
-          MaxAge: "'600'"          
+          MaxAge: "'600'" 
   CreateAuthChallenge:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -231,15 +236,10 @@ Resources:
         ApiEvent:
           Type: Api
           Properties:
-            Path: /kycidentity
-            Method: any
-            RestApiId: !Ref KycApi
-        ApiEvent:
-          Type: Api
-          Properties:
             Path: /kycidentity/{proxy+}
             Method: any
             RestApiId: !Ref KycApi
+            
   UserAthMex:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -260,12 +260,8 @@ Resources:
         ApiEvent:
           Type: Api
           Properties:
-            Path: /mexusers
-            Method: any
-            RestApiId: !Ref MxUserApi
-        ApiEvent:
-          Type: Api
-          Properties:
             Path: /mexusers/{proxy+}
             Method: any
-            RestApiId: !Ref MxUserApi
+            RestApiId: !Ref KycApi
+            Auth:
+              Authorizer: AWS_IAM

@@ -202,6 +202,13 @@ Resources:
       Description: ''
       MemorySize: 128
       Timeout: 25
+  CreateAuthChallengePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt CreateAuthChallenge.Arn
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPool}"
   DefineAuthChallenge:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -211,6 +218,13 @@ Resources:
       Description: ''
       MemorySize: 128
       Timeout: 25
+  DefineAuthChallengePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt DefineAuthChallenge.Arn
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPool}"
   VerifyAuthChallenge:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -220,6 +234,13 @@ Resources:
       Description: ''
       MemorySize: 128
       Timeout: 25
+  VerifyAuthChallengePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt VerifyAuthChallenge.Arn
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPool}"
   KycIdentity:
     Type: 'AWS::Serverless::Function'
     Properties:

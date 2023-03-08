@@ -76,6 +76,10 @@ Resources:
       - Mutable: true
         Name: phone_number
         Required: true
+      - Name: kyc
+        AttributeDataType: String
+        DeveloperOnlyAttribute: true
+        Mutable: true
       SmsAuthenticationMessage: 'Your authentication code is {####}'
       SmsConfiguration:
         ExternalId: awsfor4e4bd6a6_role_external_id
@@ -297,3 +301,72 @@ Resources:
             RestApiId: !Ref KycApi
             Auth:
               Authorizer: AWS_IAM
+  GetUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/GetUser/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref UserPool
+      Events:
+        CognitoUserPool:
+          Type: Api
+          Properties:
+            Path: /user
+            Method: get
+            RestApiId: !Ref KycApi
+      Policies:
+        - Statement:
+            - Action:
+              - "cognito-sync:*"
+              - "cognito-idp:*"
+              Effect: Allow
+              Resource: !GetAtt UserPool.Arn
+  CreateUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/CreateUser/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref UserPool
+      Events:
+        CognitoUserPool:
+          Type: Api
+          Properties:
+            Path: /user
+            Method: post
+            RestApiId: !Ref KycApi
+      Policies:
+        - Statement:
+            - Action:
+                - "cognito-sync:*"
+                - "cognito-idp:*"
+              Effect: Allow
+              Resource: !GetAtt UserPool.Arn
+  KyccallbackFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/KycCallback/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref UserPool
+      Events:
+        CognitoUserPool:
+          Type: Api
+          Properties:
+            Path: /jumio/callback
+            Method: get
+            RestApiId: !Ref KycApi
+      Policies:
+        - Statement:
+            - Action:
+                - "cognito-sync:*"
+                - "cognito-idp:*"
+              Effect: Allow
+              Resource: !GetAtt UserPool.Arn

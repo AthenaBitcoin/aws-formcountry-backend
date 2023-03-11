@@ -1,0 +1,6 @@
+{
+    "Parameters": {
+        "app":"formcountry-backend",
+        "env":"dev"
+    }
+}

@@ -1,0 +1,29 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+        nodejs: 16
+        python: 3.9        
+    commands: 
+      - node -v
+      - npm -v
+      - npm install aws-cli-js
+      - sam --version
+      - pip install --upgrade pip aws-sam-cli
+      - sam --version
+      - docker info
+      #- pip install cfn-l
+  build:
+    commands:
+      # - cfn-lint -t template.yaml
+      - echo Pre Build started on `date`
+      - echo Current Working Dir `pwd`
+      - echo files `ls`
+      - sam build --use-container
+      - echo Build completed on `date`
+  post_build:
+    commands:
+      - sam package --template-file .aws-sam/build/template.yaml --s3-bucket $S3_BUCKET --s3-prefix formcountry-backend --output-template-file packaged-template.yaml
+artifacts:
+  files:
+    - packaged-template.yaml

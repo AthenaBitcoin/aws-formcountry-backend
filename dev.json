@@ -1,6 +1,6 @@
 {
     "Parameters": {
-        "app":"formcountry-backend",
+        "app":"kyc",
         "env":"dev"
     }
 }

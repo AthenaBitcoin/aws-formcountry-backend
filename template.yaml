@@ -322,6 +322,8 @@ Resources:
         Variables:
           JUMIO_TOKEN: !Sub "/${env}/${app}/JUMIO_TOKEN"
           JUMIO_USER: !Sub "/${env}/${app}/JUMIO_USER"
+          POWERTOOLS_SERVICE_NAME: KYCIdentity
+          LOG_LEVEL: DEBUG
       Policies:
         - SSMParameterWithSlashPrefixReadPolicy:
             ParameterName: !Sub "/${env}/${app}/*"

@@ -1,5 +1,3 @@
-
-
 To Deploy from local:
 
 1. Install docker and sam cli: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html
@@ -24,5 +22,14 @@ output = json
 aws-sso-util login --profile athena-ksolves
 sam build --use-container
 sam deploy --config-env dev
-
 ```
+
+# Testing
+
+- So far I've run the api like so
+
+```shell
+  sam local start-api --port 8332 --profile athena-ksolves
+```
+
+and then simply calling the endpoint locally with postman.

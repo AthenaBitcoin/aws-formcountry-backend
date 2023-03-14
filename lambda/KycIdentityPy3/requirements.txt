@@ -1,2 +1,1 @@
-def handler(event, context):
-    print(f"yo {event}")
+requests==2.25.1

@@ -14,7 +14,6 @@ def get_jumio_token(user_id):
 
 def lambda_handler(event, context):
 
-
     result_dict = {}
     print(json.dumps(event))
     

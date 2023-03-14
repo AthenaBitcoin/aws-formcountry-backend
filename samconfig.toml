@@ -11,6 +11,9 @@ capabilities = "CAPABILITY_IAM"
 image_repositories = []
 
 [dev]
+[dev.global.parameters]
+parameter_overrides = "env=\"dev\" app=\"kyc\""
+
 [dev.deploy]
 [dev.deploy.parameters]
 stack_name = "kyc-backend"
@@ -20,5 +23,4 @@ region = "us-east-1"
 profile = "athena-ksolves"
 capabilities = "CAPABILITY_IAM"
 image_repositories = []
-parameter_overrides = "env=\"dev\" app=\"kyc\""
 confirm_changeset = true

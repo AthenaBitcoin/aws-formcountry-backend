@@ -33,19 +33,21 @@ import urllib3
 import json
 def get_jumio_token():
     values: dict[str, Any] = get_parameters_by_name(parameters={
-        os.environ["JUMIO_TOKEN"]: {"transform": 'str'},
-        os.environ["JUMIO_USER"]: {"transform": 'str'}
+        os.environ["JUMIO_TOKEN"]: {},
+        os.environ["JUMIO_USER"]: {}
     }, raise_on_error=False)
     errors: list[str] = values.get("_errors", [])
 
     if len(errors):
         print(errors)
         raise RuntimeError()
-
+    logger.info(f"Values: {values}")
     headers = {
         "Accept": 'application/json',
         "Content-Type": 'application/json',
-        "Authorization": 'Basic ' + base64.b64encode(values['JUMIO_USER'] + ':' + values['JUMIO_TOKEN']).encode(),
+        "Authorization": 'Basic ' + base64.b64encode(
+            values[os.environ["JUMIO_USER"]] + ':' +
+            values[os.environ["JUMIO_TOKEN"]]).encode(),
         "User - Agent": 'AthenaMexOnboarding',
         "Access-Control-Allow-Origin": '*'
     }

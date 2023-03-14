@@ -204,7 +204,7 @@ Resources:
           ApiKeyRequired: false
         Cors:
           AllowMethods: "'GET,POST,OPTIONS'"
-          AllowHeaders: "'content-type'"
+          AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
           AllowOrigin: "'*'"
           AllowCredentials: "'*'"
   CreateAuthChallenge:

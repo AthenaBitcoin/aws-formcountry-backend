@@ -200,6 +200,8 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
         StageName: Prod
+        Auth:
+          ApiKeyRequired: false
         Cors:
           AllowMethods: "'GET,POST,OPTIONS'"
           AllowHeaders: "'content-type'"
@@ -300,10 +302,36 @@ Resources:
         ApiEvent:
           Type: Api
           Properties:
+            Path: /kycidentity-nodewjs/{proxy+}
+            Method: any
+            RestApiId: !Ref KycApi
+  KycIdentityPy3:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: python3.9
+      CodeUri: lambda/KycIdentityPy3
+      Description: 'Python Implementation'
+      Layers:
+        - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:21
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 25
+      Environment:
+        Variables:
+          JUMIO_TOKEN: !Sub "/${env}/${app}/JUMIO_TOKEN"
+          JUMIO_USER: !Sub "/${env}/${app}/JUMIO_USER"
+      Policies:
+        - SSMParameterWithSlashPrefixReadPolicy:
+            ParameterName: !Sub "/${env}/${app}/*"
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
             Path: /kycidentity/{proxy+}
             Method: any
             RestApiId: !Ref KycApi
-            
   UserAthMex:
     Type: 'AWS::Serverless::Function'
     Properties:
